@@ -3,4 +3,8 @@ project(ibis)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(ibis main.cpp)
+include_directories(ext/glad/include)
+find_package(glfw3 3.4 REQUIRED)
+
+add_executable(ibis src/main.cpp ext/glad/src/gl.c)
+target_link_libraries(ibis PRIVATE glfw)
