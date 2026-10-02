@@ -2,7 +2,11 @@
 #include <GLFW/glfw3.h>
 #include "glad/gl.h"
 
+#include "util.hpp"
+
 #include <iostream>
+
+#define HSL_STEP 0.01
 
 
 void error_callback(int error, const char* description) {
@@ -10,7 +14,7 @@ void error_callback(int error, const char* description) {
 }
 
 void close_callback(GLFWwindow* window) {
-	std::cout << "wrap it up!" << std::endl;
+	log_info("wrap it up!");
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -37,7 +41,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 
 int main(int argc, char* argv[]) {
 	if (!glfwInit()) {
-		std::cerr << "no glfw!" << std::endl;
+		log_err("no glfw!");
 		exit(EXIT_FAILURE);
 	}
 
@@ -51,7 +55,7 @@ int main(int argc, char* argv[]) {
 
 	GLFWwindow* window = glfwCreateWindow(640, 480, "ibis", nullptr, nullptr);
 	if (!window) {
-		std::cerr << "oups" << std::endl;
+		log_err("oups");
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
@@ -69,22 +73,92 @@ int main(int argc, char* argv[]) {
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 
-	std::cout << "amazing!" << std::endl;
+	log_info("amazing!");
 
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
 	glViewport(0, 0, width, height);
 
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	//					ok to shade!
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+	constexpr GLfloat verts[] = {
+		0.0f, 0.5f,
+		0.5f, -0.5f,
+		-0.5f, -0.5f
+	};
+
+	// -----------------------------------------------------
+	//					VAOs, and VBOs!
+	// -----------------------------------------------------
+
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	GLuint vbo;
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+
+	// -----------------------------------------------------
+	//					compile shaders
+	// -----------------------------------------------------
+
+	GLuint vertShader = compile_shader("../shaders/default.vert", GL_VERTEX_SHADER);
+	GLuint fragShader = compile_shader("../shaders/default.frag", GL_FRAGMENT_SHADER);
+
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertShader);
+	glAttachShader(shaderProgram, fragShader);
+	glBindFragDataLocation(shaderProgram, 0, "outColor");
+	glLinkProgram(shaderProgram);
+	glUseProgram(shaderProgram);
+
+	// -----------------------------------------------------
+	//			   link vert data & attrs!
+	// -----------------------------------------------------
+
+	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
+	glEnableVertexAttribArray(posAttrib);
+	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+	// -----------------------------------------------------
+	//			   uniforms n stuffs
+	// -----------------------------------------------------
+
+	GLint uniColor = glGetUniformLocation(shaderProgram, "triangleColor");
+	float h = 0.0;
+	const float s = 1.0;
+	const float l = 0.75;
+
+
+	// -----------------------------------------------------
+	//					draw it!
+	// -----------------------------------------------------
+
 	while (!glfwWindowShouldClose(window)) {
 		double time = glfwGetTime();
+		h = std::fmod(h + HSL_STEP, 1.0);
+		const auto [r, g, b] = hsl2rgb(h, s, l);
+		glUniform3f(uniColor, r, g, b);
+
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	//					done shading!
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+
 	glfwDestroyWindow(window);
 
-	std::cout << "finish!" << std::endl;
+	log_info("finish'd!");
 
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
