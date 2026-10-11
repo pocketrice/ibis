@@ -1,6 +1,12 @@
 #define GLFW_INCLUDE_NONE
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
+#include <AL/al.h>
 #include "glad/gl.h"
+#include "SOIL.h"
 
 #include "util.hpp"
 
