@@ -80,6 +80,24 @@ inline GLuint compile_shader(const std::filesystem::path& filepath, const GLenum
 	return shader;
 }
 
+inline void load_image(const std::filesystem::path& filepath, const char *uniform, const GLuint shaderProgram, const GLuint *textures, const GLenum texUnit, const uint8_t texUnitIndex) {
+	int width, height;
+	unsigned char* image;
+
+	glActiveTexture(texUnit);
+	glBindTexture(GL_TEXTURE_2D, textures[texUnitIndex]);
+	image = SOIL_load_image(filepath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	SOIL_free_image_data(image);
+	glUniform1i(glGetUniformLocation(shaderProgram, uniform), texUnitIndex);
+
+	// default wrap and filter
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
 /**
  * Converts HSL to RGB.
  * @param h hue value [0.0, 1.0]

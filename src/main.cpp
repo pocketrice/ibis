@@ -10,9 +10,8 @@
 
 #include "util.hpp"
 
-#include <iostream>
-
-#define HSL_STEP 0.01
+#define HSL_STEP 0.0001
+#define FPS_DELTA 3.0
 
 
 void error_callback(int error, const char* description) {
@@ -89,14 +88,22 @@ int main(int argc, char* argv[]) {
 	//					ok to shade!
 	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-	constexpr GLfloat verts[] = {
-		0.0f, 0.5f,
-		0.5f, -0.5f,
-		-0.5f, -0.5f
+	constexpr float verts[] = {
+	//     Position         Color          Texcoords
+		-0.5f,  0.5f, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f, // Top-left
+		 0.5f,  0.5f, 0.50f, 1.0f, 0.0f, 1.0f, 0.0f, // Top-right
+		 0.5f, -0.5f, 0.25f, 0.0f, 1.0f, 1.0f, 1.0f, // Bottom-right
+		-0.5f, -0.5f,  1.0f, 1.0f, 1.0f, 0.0f, 1.0f  // Bottom-left
+	};
+
+
+	constexpr GLuint elems[] = {
+		0, 1, 3,
+		1, 2, 3
 	};
 
 	// -----------------------------------------------------
-	//					VAOs, and VBOs!
+	//				VAOs, VBOs, EBOs, texs
 	// -----------------------------------------------------
 
 	GLuint vao;
@@ -106,14 +113,24 @@ int main(int argc, char* argv[]) {
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER,
+		sizeof(verts), verts, GL_STATIC_DRAW);
+
+	GLuint ebo;
+	glGenBuffers(1, &ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+		sizeof(elems), elems, GL_STATIC_DRAW);
+
+	GLuint textures[2];
+	glGenTextures(2, textures);
 
 	// -----------------------------------------------------
 	//					compile shaders
 	// -----------------------------------------------------
 
-	GLuint vertShader = compile_shader("../shaders/default.vert", GL_VERTEX_SHADER);
-	GLuint fragShader = compile_shader("../shaders/default.frag", GL_FRAGMENT_SHADER);
+	GLuint vertShader = compile_shader("../shaders/basic.vert", GL_VERTEX_SHADER);
+	GLuint fragShader = compile_shader("../shaders/basic.frag", GL_FRAGMENT_SHADER);
 
 	GLuint shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertShader);
@@ -123,12 +140,38 @@ int main(int argc, char* argv[]) {
 	glUseProgram(shaderProgram);
 
 	// -----------------------------------------------------
-	//			   link vert data & attrs!
+	//				photographics!
+	// -----------------------------------------------------
+
+	load_image("../assets/vistapolis.jpg", "texCity", shaderProgram, textures, GL_TEXTURE0, 0);
+	load_image("../assets/verbatiny.jpg", "texCD", shaderProgram, textures, GL_TEXTURE2, 2);
+
+	// -----------------------------------------------------
+	//				 transforms!
+	// -----------------------------------------------------
+
+	auto trans = glm::mat4(1.0f);
+	const GLint uniTrans = glGetUniformLocation(shaderProgram, "trans");
+
+	// -----------------------------------------------------
+	//			        link attrs!
 	// -----------------------------------------------------
 
 	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 	glEnableVertexAttribArray(posAttrib);
-	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE,
+		7 * sizeof(float), 0);
+
+	GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
+	glEnableVertexAttribArray(colAttrib);
+	glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE,
+		7 * sizeof(float), (void*)(2 * sizeof(float)));
+
+	GLint texAttrib = glGetAttribLocation(shaderProgram, "texcoord");
+	glEnableVertexAttribArray(texAttrib);
+	glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE,
+		7 * sizeof(float), (void*)(5 * sizeof(float)));
+
 
 	// -----------------------------------------------------
 	//			   uniforms n stuffs
@@ -144,16 +187,35 @@ int main(int argc, char* argv[]) {
 	//					draw it!
 	// -----------------------------------------------------
 
-	while (!glfwWindowShouldClose(window)) {
-		double time = glfwGetTime();
-		h = std::fmod(h + HSL_STEP, 1.0);
-		const auto [r, g, b] = hsl2rgb(h, s, l);
-		glUniform3f(uniColor, r, g, b);
+	const GLint uniTime = glGetUniformLocation(shaderProgram, "time");
+	glClearColor(1.0, 1.0, 1.0, 1.0);
 
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	uint32_t fps = 0;
+	float fps_stamp = glfwGetTime() + FPS_DELTA;
+
+	trans = glm::scale(trans, glm::vec3(1.3, 1.7, 1.3));
+
+	while (!glfwWindowShouldClose(window)) {
+		float time = glfwGetTime();
+
+		trans = glm::rotate(trans, time * glm::radians(0.2f), glm::vec3(time, time, time));
+		glUniform1f(uniTime, time);
+		glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(trans));
+
+		//glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		++fps;
+		if (time >= fps_stamp) {
+			log_warn("fps: %.0f", fps / FPS_DELTA);
+			fps = 0.0;
+			fps_stamp = time + FPS_DELTA;
+		}
 	}
 
 	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
