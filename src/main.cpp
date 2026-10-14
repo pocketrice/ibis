@@ -144,14 +144,35 @@ int main(int argc, char* argv[]) {
 	// -----------------------------------------------------
 
 	load_image("../assets/vistapolis.jpg", "texCity", shaderProgram, textures, GL_TEXTURE0, 0);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
 	load_image("../assets/verbatiny.jpg", "texCD", shaderProgram, textures, GL_TEXTURE2, 2);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glGenerateMipmap(GL_TEXTURE_2D);
 
 	// -----------------------------------------------------
 	//				 transforms!
 	// -----------------------------------------------------
 
-	auto trans = glm::mat4(1.0f);
-	const GLint uniTrans = glGetUniformLocation(shaderProgram, "trans");
+	glm::mat4 view = glm::lookAt(
+		glm::vec3(1.0f, 3.0f, 1.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f)
+	);
+	GLint uniView = glGetUniformLocation(shaderProgram, "view");
+	glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
+
+	glm::mat4 proj = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 1.0f, 10.0f);
+	GLint uniProj = glGetUniformLocation(shaderProgram, "proj");
+	glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
+
+	auto model = glm::mat4(1.0f);
+	const GLint uniModel = glGetUniformLocation(shaderProgram, "model");
+
+
 
 	// -----------------------------------------------------
 	//			        link attrs!
@@ -177,7 +198,6 @@ int main(int argc, char* argv[]) {
 	//			   uniforms n stuffs
 	// -----------------------------------------------------
 
-	GLint uniColor = glGetUniformLocation(shaderProgram, "triangleColor");
 	float h = 0.0;
 	const float s = 1.0;
 	const float l = 0.75;
@@ -194,14 +214,14 @@ int main(int argc, char* argv[]) {
 	uint32_t fps = 0;
 	float fps_stamp = glfwGetTime() + FPS_DELTA;
 
-	trans = glm::scale(trans, glm::vec3(1.3, 1.7, 1.3));
+	model = glm::scale(model, glm::vec3(2.8, 2.8, 2.8));
 
 	while (!glfwWindowShouldClose(window)) {
 		float time = glfwGetTime();
 
-		trans = glm::rotate(trans, time * glm::radians(0.2f), glm::vec3(time, time, time));
+		model = glm::rotate(model, time * glm::radians(0.2f), glm::vec3(0.0, 0.0, 1.0));
 		glUniform1f(uniTime, time);
-		glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(trans));
+		glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 
 		//glDrawArrays(GL_TRIANGLES, 0, 3);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
