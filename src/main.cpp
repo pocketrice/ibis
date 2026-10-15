@@ -5,13 +5,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
 #include <AL/al.h>
+
+#include "globals.h"
 #include "glad/gl.h"
 #include "SOIL.h"
 
 #include "util.hpp"
-
-#define HSL_STEP 0.0001
-#define FPS_DELTA 3.0
 
 
 void error_callback(int error, const char* description) {
@@ -25,6 +24,9 @@ void close_callback(GLFWwindow* window) {
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
+	}
+	else if (key == GLFW_KEY_SPACE && action == GLFW_PRESS || action == GLFW_REPEAT) {
+		x_flip = true;
 	}
 }
 
@@ -165,14 +167,12 @@ int main(int argc, char* argv[]) {
 	GLint uniView = glGetUniformLocation(shaderProgram, "view");
 	glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
 
-	glm::mat4 proj = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 1.0f, 10.0f);
+	glm::mat4 proj = glm::perspective(glm::radians(40.0f), 800.0f / 600.0f, 1.0f, 10.0f);
 	GLint uniProj = glGetUniformLocation(shaderProgram, "proj");
 	glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
 
 	auto model = glm::mat4(1.0f);
 	const GLint uniModel = glGetUniformLocation(shaderProgram, "model");
-
-
 
 	// -----------------------------------------------------
 	//			        link attrs!
@@ -212,14 +212,19 @@ int main(int argc, char* argv[]) {
 
 
 	uint32_t fps = 0;
-	float fps_stamp = glfwGetTime() + FPS_DELTA;
-
-	model = glm::scale(model, glm::vec3(2.8, 2.8, 2.8));
+	float fps_stamp = glfwGetTime() + FPS_TIME;
+	float x_flip_timer = 0.0;
 
 	while (!glfwWindowShouldClose(window)) {
 		float time = glfwGetTime();
 
-		model = glm::rotate(model, time * glm::radians(0.2f), glm::vec3(0.0, 0.0, 1.0));
+		x_flip_timer = std::max((x_flip && x_flip_timer == 0.0f) + x_flip_timer - X_FLIP_DELTA, 0.0f);
+		x_flip &= (x_flip_timer > 0.0f);
+
+
+		model = glm::scale(glm::mat4(1.0), glm::vec3(2.5) + sin(glm::vec3(time, time, time) / glm::vec3(3.0)));
+		model = glm::rotate(model,  x_flip_timer * glm::radians(360.0f), glm::vec3(1.0, 0.0, 0.0));
+		model = glm::rotate(model, time * glm::radians(480.0f), glm::vec3(0.0, 0.0, 1.0));
 		glUniform1f(uniTime, time);
 		glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 
@@ -232,17 +237,15 @@ int main(int argc, char* argv[]) {
 
 		++fps;
 		if (time >= fps_stamp) {
-			log_warn("fps: %.0f", fps / FPS_DELTA);
+			log_warn("fps: %.0f", fps / FPS_TIME);
 			fps = 0.0;
-			fps_stamp = time + FPS_DELTA;
+			fps_stamp = time + FPS_TIME;
 		}
 	}
 
 	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	//					done shading!
 	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
 
 	glfwDestroyWindow(window);
 

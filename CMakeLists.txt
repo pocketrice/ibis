@@ -15,5 +15,6 @@ add_library(glad STATIC
     ext/glad/src/gl.c
 )
 
-add_executable(ibis src/main.cpp)
+add_executable(ibis src/main.cpp
+        src/globals.h)
 target_link_libraries(ibis PRIVATE glfw glad /usr/local/lib/libSOIL.a ${glm} ${opengl} ${openal} ${corefoundation} )

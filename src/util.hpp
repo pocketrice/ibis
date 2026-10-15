@@ -12,12 +12,7 @@
 #define log_err(msg, ...) fprintf(stderr, "[!] " msg "\n", ## __VA_ARGS__)   ///< Logs an error to standard error.
 #define log_warn(msg, ...) fprintf(stderr, "[?] " msg "\n", ## __VA_ARGS__)  ///< Logs a warning to standard error.
 #define log_info(msg, ...) fprintf(stdout, "[*] " msg "\n", ## __VA_ARGS__)  ///< Logs an info to standard output.
-
-/*
- * Promises
- */
-#define promise_make(msg, ...) fprintf(stdout, msg " ... ", ## __VA_ARGS__)
-#define promise_fulfill(status) fprintf(stdout, (status) ? "OK\n" : "FAIL\n")
+#define log_var(var) std::cerr << #var" = " << var << std::endl
 
 /**
  * Tries to load the file at given filepath into a string.
