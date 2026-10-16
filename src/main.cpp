@@ -52,6 +52,11 @@ int main(int argc, char* argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
+	if (argc != 2 || !std::filesystem::exists(argv[1]) || !std::filesystem::is_regular_file(argv[1])) {
+		std::cerr << "./ibis [texture]" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
 	glfwSetErrorCallback(error_callback);
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -91,11 +96,55 @@ int main(int argc, char* argv[]) {
 	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 	constexpr float verts[] = {
-	//     Position         Color          Texcoords
-		-0.5f,  0.5f, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f, // Top-left
-		 0.5f,  0.5f, 0.50f, 1.0f, 0.0f, 1.0f, 0.0f, // Top-right
-		 0.5f, -0.5f, 0.25f, 0.0f, 1.0f, 1.0f, 1.0f, // Bottom-right
-		-0.5f, -0.5f,  1.0f, 1.0f, 1.0f, 0.0f, 1.0f  // Bottom-left
+	//    X      Y     Z      R     G     B      A     U     V
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, // cube
+		 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+
+		-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+
+		-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+
+		-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+
+		-1.0f, -1.0f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, // floor
+		 1.0f, -1.0f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		 1.0f,  1.0f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		 1.0f,  1.0f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		-1.0f,  1.0f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+		-1.0f, -1.0f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f
 	};
 
 
@@ -124,8 +173,8 @@ int main(int argc, char* argv[]) {
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 		sizeof(elems), elems, GL_STATIC_DRAW);
 
-	GLuint textures[2];
-	glGenTextures(2, textures);
+	GLuint textures[1];
+	glGenTextures(1, textures);
 
 	// -----------------------------------------------------
 	//					compile shaders
@@ -145,15 +194,11 @@ int main(int argc, char* argv[]) {
 	//				photographics!
 	// -----------------------------------------------------
 
-	load_image("../assets/vistapolis.jpg", "texCity", shaderProgram, textures, GL_TEXTURE0, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	const std::filesystem::path texPath = argv[1];
 
-	load_image("../assets/verbatiny.jpg", "texCD", shaderProgram, textures, GL_TEXTURE2, 2);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	log_info("loading a texture (%s)...", texPath.filename().c_str());
+	load_image(texPath, "tex", shaderProgram, textures, GL_TEXTURE0, 0);
+
 
 	// -----------------------------------------------------
 	//				 transforms!
@@ -164,15 +209,11 @@ int main(int argc, char* argv[]) {
 		glm::vec3(0.0f, 0.0f, 0.0f),
 		glm::vec3(0.0f, 0.0f, 1.0f)
 	);
-	GLint uniView = glGetUniformLocation(shaderProgram, "view");
-	glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
 
 	glm::mat4 proj = glm::perspective(glm::radians(40.0f), 800.0f / 600.0f, 1.0f, 10.0f);
-	GLint uniProj = glGetUniformLocation(shaderProgram, "proj");
-	glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
 
-	auto model = glm::mat4(1.0f);
-	const GLint uniModel = glGetUniformLocation(shaderProgram, "model");
+	glm::mat4 model_box = {};
+	glm::mat4 model_floor = {};
 
 	// -----------------------------------------------------
 	//			        link attrs!
@@ -180,60 +221,118 @@ int main(int argc, char* argv[]) {
 
 	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 	glEnableVertexAttribArray(posAttrib);
-	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE,
-		7 * sizeof(float), 0);
+	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE,
+		9 * sizeof(float), 0);
 
-	GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
-	glEnableVertexAttribArray(colAttrib);
-	glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE,
-		7 * sizeof(float), (void*)(2 * sizeof(float)));
+	GLint colorAttrib = glGetAttribLocation(shaderProgram, "color");
+	glEnableVertexAttribArray(colorAttrib);
+	glVertexAttribPointer(colorAttrib, 4, GL_FLOAT, GL_FALSE,
+		9 * sizeof(float), (void*)(3 * sizeof(float)));
 
 	GLint texAttrib = glGetAttribLocation(shaderProgram, "texcoord");
 	glEnableVertexAttribArray(texAttrib);
 	glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE,
-		7 * sizeof(float), (void*)(5 * sizeof(float)));
-
-
-	// -----------------------------------------------------
-	//			   uniforms n stuffs
-	// -----------------------------------------------------
-
-	float h = 0.0;
-	const float s = 1.0;
-	const float l = 0.75;
-
+		9 * sizeof(float), (void*)(7 * sizeof(float)));
 
 	// -----------------------------------------------------
-	//					draw it!
+	//			   depth and stencil buffers
+	// -----------------------------------------------------
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+	glDisable(GL_CULL_FACE);
+
+	// -----------------------------------------------------
+	//			   transparency
+	// -----------------------------------------------------
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// -----------------------------------------------------
+	//			      uniforms
 	// -----------------------------------------------------
 
 	const GLint uniTime = glGetUniformLocation(shaderProgram, "time");
-	glClearColor(1.0, 1.0, 1.0, 1.0);
+	const GLint uniTint = glGetUniformLocation(shaderProgram, "tint");
 
+	const GLint uniView = glGetUniformLocation(shaderProgram, "view");
+	glUniformMatrix4fv(uniView, 1, GL_FALSE, glm::value_ptr(view));
+
+	const GLint uniProj = glGetUniformLocation(shaderProgram, "proj");
+	glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
+
+	const GLint uniModel = glGetUniformLocation(shaderProgram, "model");
+
+	// -----------------------------------------------------
+	//			      misc vars
+	// -----------------------------------------------------
 
 	uint32_t fps = 0;
 	float fps_stamp = glfwGetTime() + FPS_TIME;
 	float x_flip_timer = 0.0;
 
+	// -----------------------------------------------------
+	//					draw it!
+	// -----------------------------------------------------
+
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+
 	while (!glfwWindowShouldClose(window)) {
-		float time = glfwGetTime();
+		const float time = glfwGetTime();
 
 		x_flip_timer = std::max((x_flip && x_flip_timer == 0.0f) + x_flip_timer - X_FLIP_DELTA, 0.0f);
 		x_flip &= (x_flip_timer > 0.0f);
 
+		model_floor = glm::mat4(1.0);
+		model_floor = glm::rotate(model_floor, time * glm::radians(80.0f), glm::vec3(0.0, 0.0, 1.0));
+		model_floor = glm::rotate(model_floor, (1.0f - x_flip_timer) * glm::radians(180.0f), glm::vec3(0.0, 0.0, 1.0));
 
-		model = glm::scale(glm::mat4(1.0), glm::vec3(2.5) + sin(glm::vec3(time, time, time) / glm::vec3(3.0)));
-		model = glm::rotate(model,  x_flip_timer * glm::radians(360.0f), glm::vec3(1.0, 0.0, 0.0));
-		model = glm::rotate(model, time * glm::radians(480.0f), glm::vec3(0.0, 0.0, 1.0));
+		model_box = model_floor;
+		model_box = glm::translate(model_box, glm::vec3(0.0, 0.0, 0.3 + (sin(3.0 * time) + 0.5) / 5.0));
 		glUniform1f(uniTime, time);
-		glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
+		glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model_box));
 
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		/*
+		 * draw regular box
+		 */
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		/*
+		 * draw floor (do not occlude reflection)
+		 */
+		glEnable(GL_STENCIL_TEST);
+
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);					    // ┓
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);	 	    // ┃     use only depth buffer of first box (so reflected box isn't blocked).
+		glStencilMask(0xFF);										 	    // ┣━━   flag all stencils that pass depth test (not blocked by first box, i.e. floor) with 1
+		glDepthMask(GL_FALSE); // don't write to depth buffer			    // ┃     use this stencil mask (i.e. bounds of floor) to render the reflected box, turning on depth buffer for that box itself
+		glClear(GL_STENCIL_BUFFER_BIT); // clear stencil buffer to 0    // ┛
+
+		glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model_floor)); // null transforms for floor
+		glDrawArrays(GL_TRIANGLES, 36, 6);
+
+		/*
+		 * draw reflection (draw within floor stencil)
+		 */
+		glStencilFunc(GL_EQUAL, 1, 0xFF); // pass test if stencil == 1
+		glStencilMask(0x00); // don't write to stencil buffer
+		glDepthMask(GL_TRUE); // write to depth buffer
+
+		model_box = glm::translate(model_floor, glm::vec3(0.0, 0.0, -1.0));
+		model_box = glm::rotate(model_box, time, glm::vec3(time, time, time));
+		model_box = glm::scale(model_box, glm::vec3(1.1));
+		glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model_box));
+
+		glUniform3f(uniTint, 0.35f, 0.35f, 0.35f);  // override with darker mix color
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glUniform3f(uniTint, 1.0f, 1.0f, 1.0f);
+
+		glDisable(GL_STENCIL_TEST);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		++fps;
 		if (time >= fps_stamp) {

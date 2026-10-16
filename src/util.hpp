@@ -79,18 +79,22 @@ inline void load_image(const std::filesystem::path& filepath, const char *unifor
 	int width, height;
 	unsigned char* image;
 
+	const bool is_rgba = (filepath.extension() == ".png");
+	const int soil_format = (is_rgba) ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
+	const int gl_format = (is_rgba) ? GL_RGBA : GL_RGB;
+
 	glActiveTexture(texUnit);
 	glBindTexture(GL_TEXTURE_2D, textures[texUnitIndex]);
-	image = SOIL_load_image(filepath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	image = SOIL_load_image(filepath.c_str(), &width, &height, 0, soil_format);
+	glTexImage2D(GL_TEXTURE_2D, 0, gl_format, width, height, 0, gl_format, GL_UNSIGNED_BYTE, image);
 	SOIL_free_image_data(image);
 	glUniform1i(glGetUniformLocation(shaderProgram, uniform), texUnitIndex);
 
 	// default wrap and filter
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
 /**
