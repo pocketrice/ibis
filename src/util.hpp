@@ -6,6 +6,9 @@
 #include <iostream>
 #include <string>
 
+#include "globals.h"
+#include <regex>
+
 /*
  * Logging macros
  */
@@ -13,6 +16,15 @@
 #define log_warn(msg, ...) fprintf(stderr, "[?] " msg "\n", ## __VA_ARGS__)  ///< Logs a warning to standard error.
 #define log_info(msg, ...) fprintf(stdout, "[*] " msg "\n", ## __VA_ARGS__)  ///< Logs an info to standard output.
 #define log_var(var) std::cerr << #var" = " << var << std::endl
+
+/**
+ * Returns whether or not the candidate string matches a regex pattern.
+ * @param cand candidate string
+ * @param pattern regex pattern
+ * @return whether or not `cand` is a regex match of `pattern`
+ */
+#define IS_MATCH(cand, pattern) (std::regex_match(cand, pattern))
+
 
 /**
  * Tries to load the file at given filepath into a string.
@@ -79,18 +91,31 @@ inline void load_image(const std::filesystem::path& filepath, const char *unifor
 	int width, height;
 	unsigned char* image;
 
+	const bool is_rgba = (filepath.extension() == ".png");
+	const int soil_format = (is_rgba) ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
+	const int gl_format = (is_rgba) ? GL_RGBA : GL_RGB;
+
 	glActiveTexture(texUnit);
 	glBindTexture(GL_TEXTURE_2D, textures[texUnitIndex]);
-	image = SOIL_load_image(filepath.c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	image = SOIL_load_image(filepath.c_str(), &width, &height, 0, soil_format);
+	glTexImage2D(GL_TEXTURE_2D, 0, gl_format, width, height, 0, gl_format, GL_UNSIGNED_BYTE, image);
 	SOIL_free_image_data(image);
 	glUniform1i(glGetUniformLocation(shaderProgram, uniform), texUnitIndex);
 
 	// default wrap and filter
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
+
+/**
+ * Enables mipmapping for the presently selected GL texture.
+ */
+inline void enable_mipmaps() {
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 /**
@@ -116,6 +141,28 @@ inline std::tuple<float, float, float> hsl2rgb(const float h, const float s, con
 	const float b = x * (hd >= 120 && hd < 180 || hd >= 300 && hd < 360) + c * (hd >= 180 && hd < 300) + m;
 
 	return { r, g, b };
+}
+
+/**
+ * Finds all valid textures if the given path is a directory, returning whether or not found.
+ * @param path candidate filepath
+ * @pre `path` is a valid filepath
+ * @return whether or not `path` is directory containing valid texture(s)
+ */
+inline bool find_textures(const std::filesystem::path& path, std::vector<std::filesystem::path>& catalogue) {
+	if (std::filesystem::is_directory(path)) {
+		auto iter = std::filesystem::directory_iterator(path);
+
+		while (iter != std::filesystem::end(iter)) {
+			if (std::regex_match(iter->path().extension().string(), re_catalogue_exts)) {
+				catalogue.push_back(*iter);
+			}
+
+			++iter;
+		}
+	}
+
+	return !catalogue.empty();
 }
 
 #endif //IBIS_UTIL_HPP

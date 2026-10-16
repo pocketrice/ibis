@@ -28,6 +28,25 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	else if (key == GLFW_KEY_SPACE && action == GLFW_PRESS || action == GLFW_REPEAT) {
 		x_flip = true;
 	}
+	else if (is_catalogue && action == GLFW_PRESS && (key == GLFW_KEY_BACKSPACE || key == GLFW_KEY_ENTER || key == GLFW_KEY_RIGHT_SHIFT)) {
+		int delta;
+		switch (key) {
+			case GLFW_KEY_BACKSPACE:
+				delta = std::rand();
+				break;
+			case GLFW_KEY_ENTER:
+				delta = 1;
+				break;
+			case GLFW_KEY_RIGHT_SHIFT:
+				delta = -1;
+				break;
+		}
+
+		ptr_catalogue = (ptr_catalogue + delta + catalogue.size()) % catalogue.size();
+		log_warn("swap'd to %lu (%s)", ptr_catalogue, catalogue[ptr_catalogue].filename().c_str());
+		load_image(catalogue[ptr_catalogue], "tex", shaderProgram, textures, GL_TEXTURE0, 0);
+
+	}
 }
 
 void cursor_pos_callback(GLFWwindow* window, double xpos, double ypos) {
@@ -91,11 +110,48 @@ int main(int argc, char* argv[]) {
 	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 	constexpr float verts[] = {
-	//     Position         Color          Texcoords
-		-0.5f,  0.5f, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f, // Top-left
-		 0.5f,  0.5f, 0.50f, 1.0f, 0.0f, 1.0f, 0.0f, // Top-right
-		 0.5f, -0.5f, 0.25f, 0.0f, 1.0f, 1.0f, 1.0f, // Bottom-right
-		-0.5f, -0.5f,  1.0f, 1.0f, 1.0f, 0.0f, 1.0f  // Bottom-left
+	//    X      Y     Z      R     G     B     U     V
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+
+		-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+
+		-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		 0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+
+		-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+		 0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f
 	};
 
 
@@ -124,8 +180,7 @@ int main(int argc, char* argv[]) {
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
 		sizeof(elems), elems, GL_STATIC_DRAW);
 
-	GLuint textures[2];
-	glGenTextures(2, textures);
+	glGenTextures(1, textures);
 
 	// -----------------------------------------------------
 	//					compile shaders
@@ -134,7 +189,7 @@ int main(int argc, char* argv[]) {
 	GLuint vertShader = compile_shader("../shaders/basic.vert", GL_VERTEX_SHADER);
 	GLuint fragShader = compile_shader("../shaders/basic.frag", GL_FRAGMENT_SHADER);
 
-	GLuint shaderProgram = glCreateProgram();
+	shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertShader);
 	glAttachShader(shaderProgram, fragShader);
 	glBindFragDataLocation(shaderProgram, 0, "outColor");
@@ -145,15 +200,18 @@ int main(int argc, char* argv[]) {
 	//				photographics!
 	// -----------------------------------------------------
 
-	load_image("../assets/vistapolis.jpg", "texCity", shaderProgram, textures, GL_TEXTURE0, 0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	const std::filesystem::path texPath = (argc >= 2 && std::filesystem::exists(argv[1])) ? argv[1] : DEFAULT_TEXTURE;
+	is_catalogue = find_textures(texPath, catalogue);
 
-	load_image("../assets/verbatiny.jpg", "texCD", shaderProgram, textures, GL_TEXTURE2, 2);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	if (is_catalogue) {
+		log_warn("loading a catalogue...\npress ENTER/DELETE to swap tex!");
+	} else {
+		log_warn("loading a texture (%s)...", texPath.filename().c_str());
+		load_image(texPath, "tex", shaderProgram, textures, GL_TEXTURE0, 0);
+	}
+
+
+
 
 	// -----------------------------------------------------
 	//				 transforms!
@@ -180,22 +238,35 @@ int main(int argc, char* argv[]) {
 
 	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 	glEnableVertexAttribArray(posAttrib);
-	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE,
-		7 * sizeof(float), 0);
+	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE,
+		8 * sizeof(float), 0);
 
 	GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
 	glEnableVertexAttribArray(colAttrib);
 	glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE,
-		7 * sizeof(float), (void*)(2 * sizeof(float)));
+		8 * sizeof(float), (void*)(3 * sizeof(float)));
 
 	GLint texAttrib = glGetAttribLocation(shaderProgram, "texcoord");
 	glEnableVertexAttribArray(texAttrib);
 	glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE,
-		7 * sizeof(float), (void*)(5 * sizeof(float)));
-
+		8 * sizeof(float), (void*)(6 * sizeof(float)));
 
 	// -----------------------------------------------------
-	//			   uniforms n stuffs
+	//			   depth and stencil buffers
+	// -----------------------------------------------------
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+
+	// -----------------------------------------------------
+	//			   transparency
+	// -----------------------------------------------------
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// -----------------------------------------------------
+	//			      uniforms
 	// -----------------------------------------------------
 
 	float h = 0.0;
@@ -209,7 +280,7 @@ int main(int argc, char* argv[]) {
 
 	const GLint uniTime = glGetUniformLocation(shaderProgram, "time");
 	glClearColor(1.0, 1.0, 1.0, 1.0);
-
+	srand(time(0));
 
 	uint32_t fps = 0;
 	float fps_stamp = glfwGetTime() + FPS_TIME;
@@ -221,19 +292,18 @@ int main(int argc, char* argv[]) {
 		x_flip_timer = std::max((x_flip && x_flip_timer == 0.0f) + x_flip_timer - X_FLIP_DELTA, 0.0f);
 		x_flip &= (x_flip_timer > 0.0f);
 
-
-		model = glm::scale(glm::mat4(1.0), glm::vec3(2.5) + sin(glm::vec3(time, time, time) / glm::vec3(3.0)));
-		model = glm::rotate(model,  x_flip_timer * glm::radians(360.0f), glm::vec3(1.0, 0.0, 0.0));
-		model = glm::rotate(model, time * glm::radians(480.0f), glm::vec3(0.0, 0.0, 1.0));
+		model = glm::mat4(1.0);
+		model = glm::rotate(model, time * glm::radians(80.0f), glm::vec3(0.0, 0.0, 1.0));
+		model = glm::rotate(model, (1.0f - x_flip_timer) * glm::radians(180.0f), glm::vec3(0.0, 0.0, 1.0));
+		model = glm::translate(model, glm::vec3(0.0, 0.0, (sin(3.0 * time) + 0.5) / 5.0));
 		glUniform1f(uniTime, time);
 		glUniformMatrix4fv(uniModel, 1, GL_FALSE, glm::value_ptr(model));
 
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		++fps;
 		if (time >= fps_stamp) {
