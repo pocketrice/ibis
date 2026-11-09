@@ -6,11 +6,11 @@ in vec2 Texcoord;
 
 out vec4 outColor;
 
-uniform sampler2D tex;
+uniform sampler2D texPhoto;
 uniform float time;
 
 void main() {
-    vec4 texColor = texture(tex, Texcoord);
+    vec4 texColor = texture(texPhoto, Texcoord);
 
     if (texColor.a < 0.5) {
         discard;
